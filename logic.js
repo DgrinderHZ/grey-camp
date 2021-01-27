@@ -1,10 +1,15 @@
 
 const GRID_SIZE = 10;
-const SUBMIT_GRID_SIZE = 7;
+const GRADIENT_GRID_SIZE = 7;
+const SATURATION_MIN = 10;
 
 const gameWrapEl = document.getElementById('game-wrapper');
+const randomWrapEl = document.getElementById('random-boxes-wrapper');
+const resultWrapEl = document.getElementById('result-wrapper');
 
-var isMouseDown = false;
+var finalIndexes = [];
+var gradientIndexes = [];
+var gameCompleted = false;
 
 generateBoxes = function (){
     for(var i=0; i<GRID_SIZE; i++){
@@ -15,100 +20,159 @@ generateBoxes = function (){
         div.setAttribute('ondragstart', "dragStart(event);");
         div.setAttribute('ondragend', "dragEnd(event);");
         div.id = 'box'+i;
-        gameWrapEl.append(div);
+        randomWrapEl.append(div);
     }
 
-    for(var i=0; i<SUBMIT_GRID_SIZE; i++){
+    for(var i=0; i<GRADIENT_GRID_SIZE; i++){
         var div = document.createElement('div');
-        div.classList.add('tosubmit');
+        div.classList.add('gradient');
         div.setAttribute('ondragover', "dragOver(event);");
         div.setAttribute('ondrop', "drop(event);");
+        div.setAttribute('value', i);
         div.id = 'submitable'+i;
-        gameWrapEl.append(div);
+        resultWrapEl.append(div);
     }
 }
 generateBoxes();
 
-function addBoxEventHandlers(){
-    gameWrapEl.addEventListener('mousedown', function (e){
-        console.log('down', e.pageX, e.pageY);
 
-        pageXStart = e.pageX;
-        pageYStart = e.pageY;
-
-        isMouseDown = true;
-    });
-
-    gameWrapEl.addEventListener('mouseup', function (e){
-        console.log('up', e.pageX, e.pageY);
-
-        pageXEnd = e.pageX;
-        pageYEnd = e.pageY;
-
-        isMouseDown = false;
-    });
+function getHSL(hue, saturation, lightness) {
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`
 }
-addBoxEventHandlers();
+
+function getHue() {
+    return Math.floor(Math.random() * 360);
+}
+
+function getGradient(hue, n) {
+    const colours = [];
+    const interval = (100 - SATURATION_MIN) / n;
+    for (var i = 0; i < n; i++) {
+        colours[i] = [getHSL(hue, SATURATION_MIN + interval * i, 50), i];
+    }
+    return colours;
+}
+
+
+/**
+ * Shuffles array in place. ES6 version
+ * @param {Array} a items An array containing the items.
+ * 
+ * ES2015 (ES6) version https://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array
+ */
+function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
 
 start = function () {
+    hue = getHue();
+    colours = shuffle(getGradient(hue, GRID_SIZE));
+    gradientEls = document.getElementsByClassName('gradient');
+    
     for(var i = 0; i < GRID_SIZE ; i++){
-        document.getElementById(`box${i}`).style.backgroundColor = getRandomColor();
-    }    
+        colour = colours[i][0];
+        colourIndex = colours[i][1];
+        document.getElementById(`box${i}`).style.backgroundColor = colour;
+        document.getElementById(`box${i}`).setAttribute('value', colourIndex);
+    } 
+    
+    for (let i = 0; i < GRADIENT_GRID_SIZE; i++) {
+        finalIndexes[i] =  -1;    
+    }
+
+    for (let i = 0; i < gradientEls.length; i++) {
+        gradientIndexes[i] = parseInt(gradientEls[i].getAttribute('value'));
+    }
 }
 start();
 
-function getRandomColor() {
-    var letters = '0123456789ABCDEF'.split('');
-    var color = '#';
-    for (var i = 0; i < 6; i++ ) {
-        color += letters[Math.round(Math.random() * 15)];
-    }
-    return color;
-}
-
-document.getElementById("item2").style.backgroundColor;
-
 function dragStart(event) {
-    console.log("dragStart");
-    // change background
     event.currentTarget.style.border = "dotted";
-    // Add the id of the drag source element to the drag data payload so
-    // it is available when the drop event is fired
     event.dataTransfer.setData("text", event.target.id);
-    // Tell the browser both copy and move are possible
     event.effectAllowed = "copyMove";
 }
        
 function dragOver(event) {
-    console.log("dragOver");
-    // Change the target element's border to signify a drag over event
-    // has occurred
-    event.currentTarget.style.border = "dotted";
     event.preventDefault();
 }
        
 function drop(event) {
-    console.log("Drop");
     event.preventDefault();
-    // Get the id of drag source element (that was added to the drag data
-    // payload by the dragstart event handler)
     var id = event.dataTransfer.getData("text");
-    console.log(`Id is ${id}`);
-    
-    // Only drop if dragged to a correct position in hue array
-    //  if (id == "item1" && ev.target.id == "result1") 
    
     event.target.style.backgroundColor = document.getElementById(id).style.backgroundColor;
-   
+    // add to finalIndesxes array 
+    targetIndex = event.target.getAttribute('value');
+    finalIndexes[targetIndex] = parseInt(document.getElementById(id).getAttribute('value'));
+    // check if the gradient is fits
+    check();
 }
        
 function dragEnd(event) {
-     console.log("dragEnd");
-     // Restore source's border
      event.target.style.border = "solid black";
-     // Remove all of the drag data
      event.dataTransfer.clearData();
 }
-   
 
 
+/**
+ * Shuffles array in place. ES6 version
+ * @param {Array} a items An array containing the items.
+ * 
+ * ES2015 (ES6) version https://stackoverflow.com/questions/6274339/how-can-i-shuffle-an-array
+ */
+function shuffle(a) {
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+function containsMinusOne() {
+    for (let i = 0; i < finalIndexes.length; i++) {
+        if(finalIndexes[i] === -1)
+            return true;
+    }
+    return false;
+}
+
+function check() {
+    var gameComplete =  (checkAscending() || checkDescending()) ;
+
+    if(containsMinusOne()==false && gameComplete){
+        success();
+    }
+}
+
+function success() {
+    document.getElementById('title').innerText = "Success!"
+    document.getElementById('hint').innerText = "Congratulations on constructing the gradient... "
+    gradientEls = document.getElementsByClassName('gradient');
+    for (let i = 0; i < gradientEls.length; i++) {
+        gradientEls[i].style.border = "0px";
+    }
+}
+
+function checkAscending() {
+    //  check ascending
+    for (let i = 0; i < finalIndexes.length-1; i++) {
+        if(finalIndexes[i] >= finalIndexes[i+1]){
+            return false;
+        }
+    }
+    return true;
+}
+
+function checkDescending(params) {
+    //  check descending
+    for (let i = 0; i < finalIndexes.length-1; i++) {
+        if(finalIndexes[i] <= finalIndexes[i+1]){
+            return false;
+        }
+    }
+    return true;
+}
