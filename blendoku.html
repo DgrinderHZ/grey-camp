@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <link rel="stylesheet" href="blendokus/style.css"/>
+    <title>Get Sorted</title>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title" id="title">I want to play a game</h1>
+        <h5 class="title" id="subtitle"></h5>
+        <div class="controls">
+            <button onclick="decreaseBoxCount()">Mercy!</button>
+            <button onclick="resetGame();">Restart</button>
+            <button onclick="increaseBoxCount()">Challenge!</button>
+        </div>
+        <div id="gameWrapper" class="game-wrapper"></div>
+    </div>
+    <script src="blendokus/logic.js"></script>
+</body>
+</html>
