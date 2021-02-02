@@ -11,6 +11,9 @@ var finalIndexes = [];
 var gradientIndexes = [];
 var gameCompleted = false;
 
+/**
+ * Generates the HTML Structure.
+ */
 generateBoxes = function (){
     for(var i=0; i<GRID_SIZE; i++){
         var div = document.createElement('div');
@@ -35,15 +38,28 @@ generateBoxes = function (){
 }
 generateBoxes();
 
-
+/**
+ * Gets the hsl for css styling.
+ * @param {int} hue 
+ * @param {int} saturation as a %
+ * @param {int} lightness as a %
+ */
 function getHSL(hue, saturation, lightness) {
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`
 }
 
+/**
+ * Generates a random hue value.
+ */
 function getHue() {
     return Math.floor(Math.random() * 360);
 }
 
+/**
+ * Returns an array of n colors as a gradient.
+ * @param {int} hue in range(0, 360)
+ * @param {int} n the number of colors to  generate
+ */
 function getGradient(hue, n) {
     const colours = [];
     const interval = (100 - SATURATION_MIN) / n;
@@ -68,6 +84,9 @@ function shuffle(a) {
     return a;
 }
 
+/**
+ * Main function.
+ */
 start = function () {
     hue = getHue();
     colours = shuffle(getGradient(hue, GRID_SIZE));
@@ -90,16 +109,39 @@ start = function () {
 }
 start();
 
+
+/**
+ * Drag start handler.
+ * @param {Event} event 
+ */
 function dragStart(event) {
     event.currentTarget.style.border = "dotted";
+    // Save the draged box's id 
     event.dataTransfer.setData("text", event.target.id);
     event.effectAllowed = "copyMove";
 }
-       
+
+/**
+ * Drag end handler.
+ * @param {Event} event 
+ */
+function dragEnd(event) {
+    event.target.style.border = "solid black";
+    event.dataTransfer.clearData();
+}
+
+/**
+ * Drag over handler.
+ * @param {Event} event 
+ */
 function dragOver(event) {
     event.preventDefault();
 }
-       
+
+/**
+ * Drop down handler.
+ * @param {Event} event 
+ */      
 function drop(event) {
     event.preventDefault();
     var id = event.dataTransfer.getData("text");
@@ -112,11 +154,6 @@ function drop(event) {
     check();
 }
        
-function dragEnd(event) {
-     event.target.style.border = "solid black";
-     event.dataTransfer.clearData();
-}
-
 
 /**
  * Shuffles array in place. ES6 version
@@ -132,6 +169,9 @@ function shuffle(a) {
     return a;
 }
 
+/**
+ * Check if we still have empty boxes.
+ */
 function containsMinusOne() {
     for (let i = 0; i < finalIndexes.length; i++) {
         if(finalIndexes[i] === -1)
@@ -140,14 +180,22 @@ function containsMinusOne() {
     return false;
 }
 
+/**
+ * Check if the game is complete after every move.
+ */
 function check() {
     var gameComplete =  (checkAscending() || checkDescending()) ;
 
     if(containsMinusOne()==false && gameComplete){
         success();
+    }else if ( containsMinusOne()==false ){
+        gameOver();
     }
 }
 
+/**
+ * Update game to display a completed state.
+ */
 function success() {
     document.getElementById('title').innerText = "Success!"
     document.getElementById('hint').innerText = "Congratulations on constructing the gradient... "
@@ -157,8 +205,22 @@ function success() {
     }
 }
 
+/**
+ * Update game to display a Game Over state.
+ */
+function gameOver() {
+    document.getElementById('title').innerText = "Game Over!"
+    document.getElementById('hint').innerText = "Try Again... "
+    gradientEls = document.getElementsByClassName('gradient');
+    for (let i = 0; i < gradientEls.length; i++) {
+        gradientEls[i].style.border = "3px solid red";
+    }
+}
+
+/**
+ * Check if an ascending gradient is made.
+ */
 function checkAscending() {
-    //  check ascending
     for (let i = 0; i < finalIndexes.length-1; i++) {
         if(finalIndexes[i] >= finalIndexes[i+1]){
             return false;
@@ -167,8 +229,10 @@ function checkAscending() {
     return true;
 }
 
-function checkDescending(params) {
-    //  check descending
+/**
+ * Check if a descending gradient is made.
+ */
+function checkDescending() {
     for (let i = 0; i < finalIndexes.length-1; i++) {
         if(finalIndexes[i] <= finalIndexes[i+1]){
             return false;
